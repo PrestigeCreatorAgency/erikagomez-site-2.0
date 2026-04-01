@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Erika Gomez</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0a0a0a;--surface:#141414;--surface2:#1c1c1c;
+  --border:rgba(255,255,255,0.08);--red:#E63946;
+  --white:#F0EDE8;--gray:#888;--green:#2ecc71;
+}
+body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;min-height:100vh;}
+
+#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:40px;width:100%;max-width:360px;text-align:center;}
+.login-box h1{font-size:22px;font-weight:500;margin-bottom:6px;}
+.login-box p{font-size:13px;color:var(--gray);margin-bottom:28px;}
+
+#adminPanel{display:none;}
+
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.topbar-dot{width:8px;height:8px;border-radius:50%;background:var(--red);}
+.topbar h1{font-size:16px;font-weight:500;}
+
+.main{max-width:720px;margin:0 auto;padding:32px 20px;}
+
+.section{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:20px;overflow:hidden;}
+.section-header{padding:14px 20px;border-bottom:1px solid var(--border);font-size:11px;font-weight:500;color:var(--gray);letter-spacing:1px;text-transform:uppercase;}
+.section-body{padding:20px;}
+
+.field{margin-bottom:16px;}
+.field:last-child{margin-bottom:0;}
+label{display:block;font-size:12px;color:var(--gray);margin-bottom:6px;letter-spacing:0.5px;}
+input[type=text],input[type=url],input[type=password]{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 13px;color:var(--white);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color 0.2s;}
+input:focus{border-color:var(--red);}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:500px){.grid-2{grid-template-columns:1fr;}}
+
+.photo-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;gap:14px;align-items:center;margin-bottom:12px;}
+.photo-card:last-child{margin-bottom:0;}
+.photo-thumb{width:64px;height:80px;border-radius:8px;background:var(--bg);border:1px dashed var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--gray);font-size:20px;flex-shrink:0;}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;display:none;}
+.photo-thumb img.v{display:block;}
+.photo-info{flex:1;}
+.photo-label{font-size:13px;font-weight:500;margin-bottom:8px;}
+.photo-sub{font-size:11px;color:var(--gray);margin-bottom:10px;}
+
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
+.toggle-row:last-child{border-bottom:none;}
+.toggle-name{font-size:13px;}
+.toggle{position:relative;width:36px;height:20px;cursor:pointer;}
+.toggle input{opacity:0;width:0;height:0;}
+.slider{position:absolute;inset:0;background:var(--border);border-radius:20px;transition:background 0.2s;}
+.slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:var(--gray);border-radius:50%;transition:transform 0.2s,background 0.2s;}
+.toggle input:checked+.slider{background:rgba(230,57,70,0.3);}
+.toggle input:checked+.slider::before{transform:translateX(16px);background:var(--red);}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all 0.2s;}
+.btn-primary{background:var(--red);color:#fff;}
+.btn-primary:hover{background:#ff4757;}
+.btn-secondary{background:var(--surface2);color:var(--white);border:1px solid var(--border);}
+.btn-secondary:hover{border-color:rgba(255,255,255,0.2);}
+.btn-sm{padding:6px 12px;font-size:11px;}
+
+.save-bar{background:var(--surface);border-top:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;bottom:0;z-index:100;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+.save-bar.visible{opacity:1;pointer-events:all;}
+.save-bar p{font-size:13px;color:var(--gray);}
+
+.toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--green);color:#fff;padding:12px 24px;border-radius:40px;font-size:13px;font-weight:500;transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);z-index:300;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+.preview-link{font-size:12px;color:var(--gray);text-decoration:none;display:flex;align-items:center;gap:4px;transition:color 0.2s;}
+.preview-link:hover{color:var(--white);}
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-box">
+    <h1>Admin Panel</h1>
+    <p>Erika Gomez · Site Manager</p>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="pw" placeholder="Enter password" onkeydown="if(event.key==='Enter')login()">
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px;" onclick="login()">Sign In →</button>
+    <p id="loginErr" style="color:var(--red);font-size:12px;margin-top:12px;display:none;">Incorrect password.</p>
+  </div>
+</div>
+
+<div id="adminPanel">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-dot"></div>
+      <h1>Site Manager</h1>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <a href="../index.html" target="_blank" class="preview-link">↗ Preview site</a>
+      <button class="btn btn-secondary btn-sm" onclick="logout()">Log out</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- Hero -->
+    <div class="section">
+      <div class="section-header">Hero Section</div>
+      <div class="section-body">
+        <div class="photo-card">
+          <div class="photo-thumb" style="width:80px;height:100px;">
+            <img id="heroThumb" src="" alt="">
+            <span id="heroFallback">🖼️</span>
+          </div>
+          <div class="photo-info">
+            <div class="photo-label">Hero Photo</div>
+            <div class="photo-sub">Full-screen background · Best: portrait, high resolution</div>
+            <div style="display:flex;gap:8px;">
+              <input type="file" id="heroFile" accept="image/*" style="display:none" onchange="uploadPhoto(this,'hero')">
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('heroFile').click()">Upload</button>
+              <button class="btn btn-secondary btn-sm" onclick="clearPhoto('hero')">Remove</button>
+            </div>
+          </div>
+        </div>
+        <div class="grid-2" style="margin-top:16px;">
+          <div class="field"><label>Name Line 1</label><input type="text" id="fNameL1" oninput="dirty()"></div>
+          <div class="field"><label>Name Line 2 (italic)</label><input type="text" id="fNameL2" oninput="dirty()"></div>
+          <div class="field"><label>Handle</label><input type="text" id="fHandle" oninput="dirty()"></div>
+          <div class="field"><label>Follower Count Label</label><input type="text" id="fFollowers" oninput="dirty()"></div>
+          <div class="field"><label>CTA Button Text</label><input type="text" id="fCtaText" oninput="dirty()"></div>
+          <div class="field"><label>CTA Button URL</label><input type="url" id="fCtaUrl" oninput="dirty()"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OF Cards -->
+    <div class="section">
+      <div class="section-header">Content Cards (OF Teasers)</div>
+      <div class="section-body" id="ofCardsAdmin"></div>
+    </div>
+
+    <!-- Gallery -->
+    <div class="section">
+      <div class="section-header">Photo Gallery</div>
+      <div class="section-body" id="galleryAdmin"></div>
+    </div>
+
+    <!-- Social Icons -->
+    <div class="section">
+      <div class="section-header">Social Icons (shown in hero)</div>
+      <div class="section-body" id="socialAdmin"></div>
+    </div>
+
+    <!-- Links -->
+    <div class="section">
+      <div class="section-header">Platform Links</div>
+      <div class="section-body" id="linksAdmin"></div>
+    </div>
+
+    <!-- Footer -->
+    <div class="section">
+      <div class="section-header">Footer</div>
+      <div class="section-body">
+        <div class="field"><label>Footer Text</label><input type="text" id="fFooter" oninput="dirty()"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="save-bar" id="saveBar">
+  <p>Unsaved changes</p>
+  <div style="display:flex;gap:10px;">
+    <button class="btn btn-secondary btn-sm" onclick="discard()">Discard</button>
+    <button class="btn btn-primary" onclick="save()">Save & publish</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ content.json downloaded — upload to GitHub</div>
+
+<script>
+const PASS = 'erika2025';
+let content = null;
+let photos = {};
+
+function login(){
+  if(document.getElementById('pw').value===PASS){
+    sessionStorage.setItem('auth','1');
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('adminPanel').style.display='block';
+    init();
+  } else {
+    document.getElementById('loginErr').style.display='block';
+  }
+}
+
+function logout(){sessionStorage.removeItem('auth');location.reload();}
+
+if(sessionStorage.getItem('auth')==='1'){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('adminPanel').style.display='block';
+}
+
+async function init(){
+  try{const r=await fetch('../content.json?v='+Date.now());content=await r.json();}
+  catch(e){content={};}
+  render();
+}
+
+function render(){
+  document.getElementById('fNameL1').value=content.name_line1||'';
+  document.getElementById('fNameL2').value=content.name_line2||'';
+  document.getElementById('fHandle').value=content.handle||'';
+  document.getElementById('fFollowers').value=content.follower_count||'';
+  document.getElementById('fCtaText').value=content.cta_text||'';
+  document.getElementById('fCtaUrl').value=content.cta_url||'';
+  document.getElementById('fFooter').value=content.footer||'';
+
+  if(content.hero_photo){showThumb('heroThumb','heroFallback',content.hero_photo);}
+
+  // OF Cards
+  const ofEl=document.getElementById('ofCardsAdmin');
+  ofEl.innerHTML='';
+  (content.of_cards||[]).forEach((c,i)=>{
+    ofEl.innerHTML+=`
+    <div class="photo-card">
+      <div class="photo-thumb">
+        <img id="ofThumb${i}" src="${c.photo||''}" alt="" class="${c.photo?'v':''}">
+        <span id="ofFb${i}" style="${c.photo?'display:none':''}">🖼️</span>
+      </div>
+      <div class="photo-info">
+        <div class="photo-label">${c.badge} Card</div>
+        <div class="photo-sub">Teaser photo for this card (will be blurred)</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <input type="file" id="ofFile${i}" accept="image/*" style="display:none" onchange="uploadPhoto(this,'of',${i})">
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('ofFile${i}').click()">Upload</button>
+          <button class="btn btn-secondary btn-sm" onclick="clearPhoto('of',${i})">Remove</button>
+        </div>
+        <input type="text" value="${c.label}" placeholder="Card label" oninput="updateOF(${i},'label',this.value)" style="margin-bottom:8px;">
+        <input type="url" value="${c.url}" placeholder="URL" oninput="updateOF(${i},'url',this.value)">
+      </div>
+    </div>`;
+  });
+
+  // Gallery
+  const galEl=document.getElementById('galleryAdmin');
+  galEl.innerHTML='';
+  (content.gallery||[]).forEach((g,i)=>{
+    galEl.innerHTML+=`
+    <div class="photo-card">
+      <div class="photo-thumb">
+        <img id="galThumb${i}" src="${g.photo||''}" alt="" class="${g.photo?'v':''}">
+        <span id="galFb${i}" style="${g.photo?'display:none':''}">🖼️</span>
+      </div>
+      <div class="photo-info">
+        <div class="photo-label">Gallery Photo ${i+1}</div>
+        <div class="photo-sub">${i===0?'Wide banner (first photo) · Landscape recommended':'Portrait orientation recommended'}</div>
+        <div style="display:flex;gap:8px;">
+          <input type="file" id="galFile${i}" accept="image/*" style="display:none" onchange="uploadPhoto(this,'gallery',${i})">
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('galFile${i}').click()">Upload</button>
+          <button class="btn btn-secondary btn-sm" onclick="clearPhoto('gallery',${i})">Remove</button>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  // Social
+  const socEl=document.getElementById('socialAdmin');
+  socEl.innerHTML='';
+  (content.social_icons||[]).forEach((s,i)=>{
+    socEl.innerHTML+=`
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-name">${s.id.charAt(0).toUpperCase()+s.id.slice(1)}</div>
+        <input type="url" value="${s.url}" placeholder="URL" oninput="updateSocial(${i},'url',this.value)" style="margin-top:6px;">
+      </div>
+      <label class="toggle">
+        <input type="checkbox" ${s.enabled?'checked':''} onchange="updateSocial(${i},'enabled',this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>`;
+  });
+
+  // Links
+  const linksEl=document.getElementById('linksAdmin');
+  linksEl.innerHTML='';
+  (content.links||[]).forEach((l,i)=>{
+    linksEl.innerHTML+=`
+    <div class="toggle-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="toggle-name">${l.id.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</div>
+        <label class="toggle">
+          <input type="checkbox" ${l.enabled?'checked':''} onchange="updateLink(${i},'enabled',this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="grid-2">
+        <input type="text" value="${l.label}" placeholder="Button label" oninput="updateLink(${i},'label',this.value)">
+        <input type="text" value="${l.sublabel}" placeholder="Sub-label" oninput="updateLink(${i},'sublabel',this.value)">
+        <input type="url" value="${l.url}" placeholder="URL" oninput="updateLink(${i},'url',this.value)" style="grid-column:1/-1;">
+      </div>
+    </div>`;
+  });
+}
+
+function showThumb(imgId,fbId,src){
+  const img=document.getElementById(imgId);
+  const fb=document.getElementById(fbId);
+  if(img){img.src=src;img.classList.add('v');}
+  if(fb)fb.style.display='none';
+}
+
+function uploadPhoto(input,type,index){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const data=e.target.result;
+    if(type==='hero'){
+      photos.hero=data;
+      showThumb('heroThumb','heroFallback',data);
+    } else if(type==='of'){
+      if(!photos.of)photos.of={};
+      photos.of[index]=data;
+      showThumb('ofThumb'+index,'ofFb'+index,data);
+    } else if(type==='gallery'){
+      if(!photos.gallery)photos.gallery={};
+      photos.gallery[index]=data;
+      showThumb('galThumb'+index,'galFb'+index,data);
+    }
+    dirty();
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearPhoto(type,index){
+  if(type==='hero'){photos.hero='';content.hero_photo='';const img=document.getElementById('heroThumb');if(img){img.src='';img.classList.remove('v');}document.getElementById('heroFallback').style.display='';}
+  else if(type==='of'){if(photos.of)photos.of[index]='';content.of_cards[index].photo='';const img=document.getElementById('ofThumb'+index);if(img){img.src='';img.classList.remove('v');}document.getElementById('ofFb'+index).style.display='';}
+  else if(type==='gallery'){if(photos.gallery)photos.gallery[index]='';content.gallery[index].photo='';const img=document.getElementById('galThumb'+index);if(img){img.src='';img.classList.remove('v');}document.getElementById('galFb'+index).style.display='';}
+  dirty();
+}
+
+function updateOF(i,k,v){if(content.of_cards&&content.of_cards[i])content.of_cards[i][k]=v;dirty();}
+function updateSocial(i,k,v){if(content.social_icons&&content.social_icons[i])content.social_icons[i][k]=v;dirty();}
+function updateLink(i,k,v){if(content.links&&content.links[i])content.links[i][k]=v;dirty();}
+
+function dirty(){document.getElementById('saveBar').classList.add('visible');}
+function discard(){document.getElementById('saveBar').classList.remove('visible');init();}
+
+function save(){
+  const out={...content};
+  out.name_line1=document.getElementById('fNameL1').value;
+  out.name_line2=document.getElementById('fNameL2').value;
+  out.handle=document.getElementById('fHandle').value;
+  out.follower_count=document.getElementById('fFollowers').value;
+  out.cta_text=document.getElementById('fCtaText').value;
+  out.cta_url=document.getElementById('fCtaUrl').value;
+  out.footer=document.getElementById('fFooter').value;
+  if(photos.hero!==undefined)out.hero_photo=photos.hero;
+  if(photos.of){Object.keys(photos.of).forEach(i=>{if(out.of_cards&&out.of_cards[i])out.of_cards[i].photo=photos.of[i];});}
+  if(photos.gallery){Object.keys(photos.gallery).forEach(i=>{if(out.gallery&&out.gallery[i])out.gallery[i].photo=photos.gallery[i];});}
+
+  const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='content.json';a.click();
+  URL.revokeObjectURL(url);
+
+  document.getElementById('saveBar').classList.remove('visible');
+  const t=document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),4000);
+}
+
+if(sessionStorage.getItem('auth')==='1')init();
+</script>
+</body>
+</html>
